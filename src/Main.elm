@@ -1,10 +1,10 @@
 module Main exposing (..)
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (..)
--- import Svg exposing (..)
--- import Svg.Attributes exposing (..)
+import Svg exposing (..)
+import Svg.Attributes exposing (..)
 
+main : Program () Model Msg
 main = Browser.document { init = init, view = view, update = update, subscriptions = subscriptions}
 
 type alias Model = {
@@ -38,11 +38,13 @@ subscriptions _ =
 view : Model -> Browser.Document Msg
 view _ = {
   title = "stimpy's elm page",
-  body = [ text "happy happy joy joy"]
-    -- svg
-    --   [ viewBox "0 0 400 600"
-    --   , width "600"
-    --   , height "400"
-    --   ]
-    --   [rect [width "100", height "100"] []]
+  body = [backdrop]
   }
+
+backdrop : Svg msg
+backdrop = svg
+      [ viewBox "0 0 400 600"
+      , width "600"
+      , height "400"
+      ]
+      [rect [width "100", height "100"] []]
