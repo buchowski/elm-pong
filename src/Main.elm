@@ -14,12 +14,14 @@ main =
 type alias Model =
     { playerOnePosY : Int
     , playerTwoPosY : Int
+    , ballPosX : Int
+    , ballPosY : Int
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 50 50
+    ( Model 50 50 300 100
     , Cmd.none
     )
 
@@ -49,17 +51,50 @@ subscriptions _ =
 
 
 view : Model -> Browser.Document Msg
-view _ =
+view model =
     { title = "stimpy's elm page"
-    , body = [ backdrop ]
+    , body = [ backdrop model ]
     }
 
 
-backdrop : Svg msg
-backdrop =
+backdrop : Model -> Svg msg
+backdrop model =
     svg
-        [ viewBox "0 0 400 600"
+        [ viewBox "0 0 600 400"
         , width "600"
         , height "400"
         ]
-        [ rect [ width "100", height "100" ] [] ]
+        [ rect [ width "100%", height "100%" ] []
+        , paddleOne model.playerOnePosY
+        , paddleTwo model.playerTwoPosY
+        , ball model.ballPosX model.ballPosY
+        ]
+
+
+ball : Int -> Int -> Svg msg
+ball posX posY =
+    circle [ fill "white", r "12", cx (String.fromInt posX), cy (String.fromInt posY) ] []
+
+
+paddleOne : Int -> Svg msg
+paddleOne yPos =
+    paddle "red" 40 yPos
+
+
+paddleTwo : Int -> Svg msg
+paddleTwo yPos =
+    paddle "blue" 540 yPos
+
+
+paddle : String -> Int -> Int -> Svg msg
+paddle color xPosInt yPosInt =
+    let
+        xPos =
+            String.fromInt xPosInt
+
+        yPos =
+            String.fromInt yPosInt
+    in
+    rect
+        [ fill color, x xPos, y yPos, width "20", height "45" ]
+        []
