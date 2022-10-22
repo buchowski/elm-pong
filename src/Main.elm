@@ -1,7 +1,9 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Events exposing (..)
 import Html exposing (..)
+import Json.Decode as Decode
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
@@ -27,27 +29,66 @@ init _ =
 
 
 type Msg
-    = MovePlayerOne Int
-    | MovePlayerTwo Int
+    = MovePlayerOneUp
+    | MovePlayerOneDown
+    | MovePlayerTwoUp
+    | MovePlayerTwoDown
+    | Other
+
+
+moveDelta : Int
+moveDelta =
+    10
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MovePlayerOne posY ->
-            ( { model | playerOnePosY = posY }
+        MovePlayerOneUp ->
+            ( { model | playerOnePosY = model.playerOnePosY - moveDelta }
             , Cmd.none
             )
 
-        MovePlayerTwo posY ->
-            ( { model | playerTwoPosY = posY }
+        MovePlayerOneDown ->
+            ( { model | playerOnePosY = model.playerOnePosY + moveDelta }
             , Cmd.none
             )
+
+        MovePlayerTwoUp ->
+            ( { model | playerTwoPosY = model.playerTwoPosY - moveDelta }
+            , Cmd.none
+            )
+
+        MovePlayerTwoDown ->
+            ( { model | playerTwoPosY = model.playerTwoPosY + moveDelta }
+            , Cmd.none
+            )
+
+        Other ->
+            ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Browser.Events.onKeyDown keyDecoder
+
+
+keyDecoder : Decode.Decoder Msg
+keyDecoder =
+    Decode.map toKeyboardInput (Decode.field "key" Decode.string)
+
+
+toKeyboardInput : String -> Msg
+toKeyboardInput key =
+    case key of
+        "ArrowUp" ->
+            MovePlayerTwoUp
+
+        "ArrowDown" ->
+            MovePlayerTwoDown
+
+        _ ->
+            Other
 
 
 view : Model -> Browser.Document Msg
