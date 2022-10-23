@@ -18,14 +18,20 @@ type alias Model =
     , playerTwoPosY : Int
     , ballPosX : Int
     , ballPosY : Int
+    , ballDir : Direction
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model startYPos startYPos 300 100
+    ( Model startYPos startYPos 300 100 Right
     , Cmd.none
     )
+
+
+type Direction
+    = Right
+    | Left
 
 
 type Msg
@@ -33,6 +39,7 @@ type Msg
     | MovePlayerOneDown
     | MovePlayerTwoUp
     | MovePlayerTwoDown
+    | MoveBall Float
     | Other
 
 
@@ -63,6 +70,43 @@ getPosInBounds posY =
         posY
 
 
+getNextBallPos : Model -> ( Direction, Int, Int )
+getNextBallPos model =
+    let
+        direction =
+            model.ballDir
+
+        xPos =
+            model.ballPosX
+
+        yPos =
+            model.ballPosY
+    in
+    case direction of
+        Right ->
+            if xPos >= 600 then
+                ( Left, xPos - 1, yPos )
+
+            else
+                ( Right, xPos + 1, yPos )
+
+        Left ->
+            if xPos <= 0 then
+                ( Right, xPos + 1, yPos )
+
+            else
+                ( Left, xPos - 1, yPos )
+
+
+updateModelWithNewBallPos : Model -> Model
+updateModelWithNewBallPos model =
+    let
+        ( newDir, newXPos, newYPos ) =
+            getNextBallPos model
+    in
+    { model | ballDir = newDir, ballPosX = newXPos, ballPosY = newYPos }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -86,13 +130,21 @@ update msg model =
             , Cmd.none
             )
 
+        MoveBall _ ->
+            ( updateModelWithNewBallPos model, Cmd.none )
+
         Other ->
             ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Browser.Events.onKeyDown keyDecoder
+    Sub.batch
+        [ Browser.Events.onKeyDown
+            keyDecoder
+        , Browser.Events.onAnimationFrameDelta
+            MoveBall
+        ]
 
 
 keyDecoder : Decode.Decoder Msg
