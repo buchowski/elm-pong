@@ -2,9 +2,8 @@ module Main exposing (..)
 
 import Browser
 import Browser.Events exposing (..)
-import Html exposing (..)
 import Json.Decode as Decode
-import Svg exposing (..)
+import Svg exposing (Svg, circle, rect, svg, text, text_)
 import Svg.Attributes exposing (..)
 
 
@@ -22,14 +21,22 @@ type alias Model =
     , ballPosY : Int
     , ballDeltaX : Int
     , ballDeltaY : Int
+    , gameMode : GameMode
+    , isPaused : Bool
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model startYPos startYPos 0 0 300 100 xSpeed -ySpeed
+    ( Model startYPos startYPos 0 0 300 100 0 0 SinglePlayerVsSelf True
     , Cmd.none
     )
+
+
+type GameMode
+    = SinglePlayerVsSelf
+    | SinglePlayerVsBot
+    | TwoPlayer
 
 
 type Msg
@@ -271,6 +278,11 @@ view model =
     }
 
 
+iToS : Int -> String
+iToS num =
+    String.fromInt num
+
+
 backdrop : Model -> Svg msg
 backdrop model =
     svg
@@ -282,8 +294,24 @@ backdrop model =
         , paddleOne model.playerOnePosY
         , paddleTwo model.playerTwoPosY
         , ball model.ballPosX model.ballPosY
-        , text_ [ fill "white", x "10", y "390" ] [ Svg.text ("Player One: " ++ String.fromInt model.playerOneScore) ]
-        , text_ [ fill "white", x "490", y "390" ] [ Svg.text ("Player Two: " ++ String.fromInt model.playerTwoScore) ]
+        , text_ [ fill "white", x "10", y "390" ] [ text ("Player One: " ++ iToS model.playerOneScore) ]
+        , text_ [ fill "white", x "490", y "390" ] [ text ("Player Two: " ++ iToS model.playerTwoScore) ]
+        , button "Start Game" 265 196
+        ]
+
+
+button : String -> Int -> Int -> Svg msg
+button label posX posY =
+    let
+        textPosX =
+            posX + 6
+
+        textPosY =
+            posY + 18
+    in
+    svg [ style "cursor: pointer" ]
+        [ rect [ width "84", height "26", stroke "white", fillOpacity "0", x (iToS posX), y (iToS posY) ] []
+        , text_ [ fill "white", x (iToS textPosX), y (iToS textPosY) ] [ Svg.text label ]
         ]
 
 
@@ -294,7 +322,7 @@ ballRadius =
 
 ball : Int -> Int -> Svg msg
 ball posX posY =
-    circle [ fill "white", r (String.fromInt ballRadius), cx (String.fromInt posX), cy (String.fromInt posY) ] []
+    circle [ fill "white", r (iToS ballRadius), cx (iToS posX), cy (iToS posY) ] []
 
 
 paddleOneXPos : Int
@@ -331,11 +359,11 @@ paddle : String -> Int -> Int -> Svg msg
 paddle color xPosInt yPosInt =
     let
         xPos =
-            String.fromInt xPosInt
+            iToS xPosInt
 
         yPos =
-            String.fromInt yPosInt
+            iToS yPosInt
     in
     rect
-        [ fill color, x xPos, y yPos, width (String.fromInt paddleWidth), height (String.fromInt paddleHeight) ]
+        [ fill color, x xPos, y yPos, width (iToS paddleWidth), height (iToS paddleHeight) ]
         []
