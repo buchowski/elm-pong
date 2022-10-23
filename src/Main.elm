@@ -23,7 +23,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model 50 50 300 100
+    ( Model startYPos startYPos 300 100
     , Cmd.none
     )
 
@@ -41,13 +41,23 @@ moveDelta =
     10
 
 
+startYPos : Int
+startYPos =
+    maxYPos // 2
+
+
+maxYPos : Int
+maxYPos =
+    400 - 45 - 10
+
+
 getPosInBounds : Int -> Int
 getPosInBounds posY =
-    if posY > 400 then
-        400
+    if posY >= maxYPos then
+        maxYPos
 
-    else if posY < 0 then
-        0
+    else if posY <= 10 then
+        10
 
     else
         posY
