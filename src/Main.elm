@@ -16,6 +16,8 @@ main =
 type alias Model =
     { playerOnePosY : Int
     , playerTwoPosY : Int
+    , playerOneScore : Int
+    , playerTwoScore : Int
     , ballPosX : Int
     , ballPosY : Int
     , ballDeltaX : Int
@@ -25,7 +27,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model startYPos startYPos 300 100 xSpeed -ySpeed
+    ( Model startYPos startYPos 0 0 300 100 xSpeed -ySpeed
     , Cmd.none
     )
 
@@ -137,14 +139,16 @@ getNextYDelta model =
         model.ballDeltaY
 
 
+getIsOutOfBoundsX : Model -> ( Bool, Bool )
+getIsOutOfBoundsX model =
+    ( model.ballPosX >= 600, model.ballPosX <= 0 )
+
+
 getNextXDelta : Model -> Int
 getNextXDelta model =
     let
-        isTooFarRight =
-            model.ballPosX >= 600
-
-        isTooFarLeft =
-            model.ballPosX <= 0
+        ( isTooFarRight, isTooFarLeft ) =
+            getIsOutOfBoundsX model
 
         isLeftPaddleCollison =
             getIsCollision model paddleOneXPos model.playerOnePosY
@@ -173,15 +177,6 @@ getNextDeltas model =
     ( getNextXDelta model, getNextYDelta model )
 
 
-updateModelWithNewBallPos : Model -> Model
-updateModelWithNewBallPos model =
-    let
-        ( xDelta, yDelta ) =
-            getNextDeltas model
-    in
-    { model | ballPosX = model.ballPosX + xDelta, ballDeltaX = xDelta, ballPosY = model.ballPosY + yDelta, ballDeltaY = yDelta }
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -206,7 +201,30 @@ update msg model =
             )
 
         MoveBall _ ->
-            ( updateModelWithNewBallPos model, Cmd.none )
+            let
+                ( xDelta, yDelta ) =
+                    getNextDeltas model
+
+                newBallPosX =
+                    model.ballPosX + xDelta
+
+                newBallPosY =
+                    model.ballPosY + yDelta
+
+                ( isTooFarRight, isTooFarLeft ) =
+                    getIsOutOfBoundsX model
+
+                updatedModel =
+                    { model | ballPosX = newBallPosX, ballDeltaX = xDelta, ballPosY = newBallPosY, ballDeltaY = yDelta }
+            in
+            if isTooFarLeft then
+                ( { updatedModel | playerTwoScore = model.playerTwoScore + 1 }, Cmd.none )
+
+            else if isTooFarRight then
+                ( { updatedModel | playerOneScore = model.playerOneScore + 1 }, Cmd.none )
+
+            else
+                ( updatedModel, Cmd.none )
 
         Other ->
             ( model, Cmd.none )
@@ -248,7 +266,7 @@ toKeyboardInput key =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "stimpy's elm page"
+    { title = "Pong Game"
     , body = [ backdrop model ]
     }
 
@@ -264,6 +282,8 @@ backdrop model =
         , paddleOne model.playerOnePosY
         , paddleTwo model.playerTwoPosY
         , ball model.ballPosX model.ballPosY
+        , text_ [ fill "white", x "10", y "390" ] [ Svg.text ("Player One: " ++ String.fromInt model.playerOneScore) ]
+        , text_ [ fill "white", x "490", y "390" ] [ Svg.text ("Player Two: " ++ String.fromInt model.playerTwoScore) ]
         ]
 
 
