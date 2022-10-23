@@ -76,6 +76,48 @@ ySpeed =
     2
 
 
+getIsCollision : Model -> Int -> Int -> Bool
+getIsCollision model paddlePosX paddlePosY =
+    let
+        ballLeft =
+            model.ballPosX - ballRadius
+
+        ballRight =
+            model.ballPosX + ballRadius
+
+        ballTop =
+            model.ballPosY - ballRadius
+
+        ballBottom =
+            model.ballPosY + ballRadius
+
+        paddleLeft =
+            paddlePosX
+
+        paddleRight =
+            paddlePosX + paddleWidth
+
+        paddleTop =
+            paddlePosY
+
+        paddleBottom =
+            paddlePosY + paddleHeight
+
+        doesBallLeftOverlap =
+            ballLeft >= paddleLeft && ballLeft <= paddleRight
+
+        doesBallRightOverlap =
+            ballRight >= paddleLeft && ballRight <= paddleRight
+
+        doesBallTopOverlap =
+            ballTop >= paddleTop && ballTop <= paddleBottom
+
+        doesBallBottomOverlap =
+            ballBottom >= paddleTop && ballBottom <= paddleBottom
+    in
+    (doesBallLeftOverlap || doesBallRightOverlap) && (doesBallTopOverlap || doesBallBottomOverlap)
+
+
 getNextYDelta : Model -> Int
 getNextYDelta model =
     let
@@ -103,8 +145,20 @@ getNextXDelta model =
 
         isTooFarLeft =
             model.ballPosX <= 0
+
+        isLeftPaddleCollison =
+            getIsCollision model paddleOneXPos model.playerOnePosY
+
+        isRightPaddleCollison =
+            getIsCollision model paddleTwoXPos model.playerTwoPosY
+
+        isCollision =
+            isLeftPaddleCollison || isRightPaddleCollison
     in
-    if isTooFarRight then
+    if isCollision then
+        -model.ballDeltaX
+
+    else if isTooFarRight then
         -xSpeed
 
     else if isTooFarLeft then
@@ -213,19 +267,44 @@ backdrop model =
         ]
 
 
+ballRadius : Int
+ballRadius =
+    12
+
+
 ball : Int -> Int -> Svg msg
 ball posX posY =
-    circle [ fill "white", r "12", cx (String.fromInt posX), cy (String.fromInt posY) ] []
+    circle [ fill "white", r (String.fromInt ballRadius), cx (String.fromInt posX), cy (String.fromInt posY) ] []
+
+
+paddleOneXPos : Int
+paddleOneXPos =
+    40
+
+
+paddleTwoXPos : Int
+paddleTwoXPos =
+    540
 
 
 paddleOne : Int -> Svg msg
 paddleOne yPos =
-    paddle "red" 40 yPos
+    paddle "red" paddleOneXPos yPos
 
 
 paddleTwo : Int -> Svg msg
 paddleTwo yPos =
-    paddle "blue" 540 yPos
+    paddle "skyblue" paddleTwoXPos yPos
+
+
+paddleWidth : Int
+paddleWidth =
+    20
+
+
+paddleHeight : Int
+paddleHeight =
+    45
 
 
 paddle : String -> Int -> Int -> Svg msg
@@ -238,5 +317,5 @@ paddle color xPosInt yPosInt =
             String.fromInt yPosInt
     in
     rect
-        [ fill color, x xPos, y yPos, width "20", height "45" ]
+        [ fill color, x xPos, y yPos, width (String.fromInt paddleWidth), height (String.fromInt paddleHeight) ]
         []
