@@ -18,20 +18,16 @@ type alias Model =
     , playerTwoPosY : Int
     , ballPosX : Int
     , ballPosY : Int
-    , ballDir : Direction
+    , ballDeltaX : Int
+    , ballDeltaY : Int
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model startYPos startYPos 300 100 Right
+    ( Model startYPos startYPos 300 100 xSpeed -ySpeed
     , Cmd.none
     )
-
-
-type Direction
-    = Right
-    | Left
 
 
 type Msg
@@ -70,41 +66,66 @@ getPosInBounds posY =
         posY
 
 
-getNextBallPos : Model -> ( Direction, Int, Int )
-getNextBallPos model =
+xSpeed : Int
+xSpeed =
+    5
+
+
+ySpeed : Int
+ySpeed =
+    2
+
+
+getNextYDelta : Model -> Int
+getNextYDelta model =
     let
-        direction =
-            model.ballDir
+        isTooHigh =
+            model.ballPosY <= 0
 
-        xPos =
-            model.ballPosX
-
-        yPos =
-            model.ballPosY
+        isTooLow =
+            model.ballPosY >= 400
     in
-    case direction of
-        Right ->
-            if xPos >= 600 then
-                ( Left, xPos - 1, yPos )
+    if isTooHigh then
+        ySpeed
 
-            else
-                ( Right, xPos + 1, yPos )
+    else if isTooLow then
+        -ySpeed
 
-        Left ->
-            if xPos <= 0 then
-                ( Right, xPos + 1, yPos )
+    else
+        model.ballDeltaY
 
-            else
-                ( Left, xPos - 1, yPos )
+
+getNextXDelta : Model -> Int
+getNextXDelta model =
+    let
+        isTooFarRight =
+            model.ballPosX >= 600
+
+        isTooFarLeft =
+            model.ballPosX <= 0
+    in
+    if isTooFarRight then
+        -xSpeed
+
+    else if isTooFarLeft then
+        xSpeed
+
+    else
+        model.ballDeltaX
+
+
+getNextDeltas : Model -> ( Int, Int )
+getNextDeltas model =
+    ( getNextXDelta model, getNextYDelta model )
 
 
 updateModelWithNewBallPos : Model -> Model
 updateModelWithNewBallPos model =
     let
-        ( newDir, newXPos, newYPos ) =
-            getNextBallPos model
+        ( xDelta, yDelta ) =
+            getNextDeltas model
     in
-    { model | ballDir = newDir, ballPosX = newXPos, ballPosY = newYPos }
+    { model | ballPosX = model.ballPosX + xDelta, ballDeltaX = xDelta, ballPosY = model.ballPosY + yDelta, ballDeltaY = yDelta }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
