@@ -41,26 +41,38 @@ moveDelta =
     10
 
 
+getPosInBounds : Int -> Int
+getPosInBounds posY =
+    if posY > 400 then
+        400
+
+    else if posY < 0 then
+        0
+
+    else
+        posY
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MovePlayerOneUp ->
-            ( { model | playerOnePosY = model.playerOnePosY - moveDelta }
+            ( { model | playerOnePosY = getPosInBounds model.playerOnePosY - moveDelta }
             , Cmd.none
             )
 
         MovePlayerOneDown ->
-            ( { model | playerOnePosY = model.playerOnePosY + moveDelta }
+            ( { model | playerOnePosY = getPosInBounds model.playerOnePosY + moveDelta }
             , Cmd.none
             )
 
         MovePlayerTwoUp ->
-            ( { model | playerTwoPosY = model.playerTwoPosY - moveDelta }
+            ( { model | playerTwoPosY = getPosInBounds model.playerTwoPosY - moveDelta }
             , Cmd.none
             )
 
         MovePlayerTwoDown ->
-            ( { model | playerTwoPosY = model.playerTwoPosY + moveDelta }
+            ( { model | playerTwoPosY = getPosInBounds model.playerTwoPosY + moveDelta }
             , Cmd.none
             )
 
@@ -81,6 +93,12 @@ keyDecoder =
 toKeyboardInput : String -> Msg
 toKeyboardInput key =
     case key of
+        "w" ->
+            MovePlayerOneUp
+
+        "s" ->
+            MovePlayerOneDown
+
         "ArrowUp" ->
             MovePlayerTwoUp
 
