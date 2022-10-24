@@ -21,6 +21,8 @@ type alias Model =
     , ballPosY : Int
     , ballDeltaX : Int
     , ballDeltaY : Int
+    , ballDeltaXCopy : Int
+    , ballDeltaYCopy : Int
     , gameMode : GameMode
     , isPaused : Bool
     }
@@ -28,7 +30,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model startYPos startYPos 0 0 300 100 0 0 SinglePlayerVsSelf True
+    ( Model startYPos startYPos 0 0 300 100 0 0 xSpeed ySpeed SinglePlayerVsSelf True
     , Cmd.none
     )
 
@@ -45,6 +47,7 @@ type Msg
     | MovePlayerTwoUp
     | MovePlayerTwoDown
     | MoveBall Float
+    | TogglePauseGame
     | Other
 
 
@@ -187,6 +190,17 @@ getNextDeltas model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        TogglePauseGame ->
+            if model.isPaused then
+                ( { model | isPaused = False, ballDeltaX = model.ballDeltaXCopy, ballDeltaY = model.ballDeltaYCopy }
+                , Cmd.none
+                )
+
+            else
+                ( { model | isPaused = True, ballDeltaX = 0, ballDeltaY = 0, ballDeltaXCopy = model.ballDeltaX, ballDeltaYCopy = model.ballDeltaY }
+                , Cmd.none
+                )
+
         MovePlayerOneUp ->
             ( { model | playerOnePosY = getPosInBounds model.playerOnePosY - moveDelta }
             , Cmd.none
@@ -255,6 +269,9 @@ keyDecoder =
 toKeyboardInput : String -> Msg
 toKeyboardInput key =
     case key of
+        "p" ->
+            TogglePauseGame
+
         "w" ->
             MovePlayerOneUp
 
@@ -296,7 +313,7 @@ backdrop model =
         , ball model.ballPosX model.ballPosY
         , text_ [ fill "white", x "10", y "390" ] [ text ("Player One: " ++ iToS model.playerOneScore) ]
         , text_ [ fill "white", x "490", y "390" ] [ text ("Player Two: " ++ iToS model.playerTwoScore) ]
-        , button "Start Game" 265 196
+        , button "Press p to start" 255 196
         ]
 
 
@@ -304,13 +321,13 @@ button : String -> Int -> Int -> Svg msg
 button label posX posY =
     let
         textPosX =
-            posX + 6
+            posX + 7
 
         textPosY =
             posY + 18
     in
     svg [ style "cursor: pointer" ]
-        [ rect [ width "84", height "26", stroke "white", fillOpacity "0", x (iToS posX), y (iToS posY) ] []
+        [ rect [ width "108", height "26", stroke "white", fillOpacity "0", x (iToS posX), y (iToS posY) ] []
         , text_ [ fill "white", x (iToS textPosX), y (iToS textPosY) ] [ Svg.text label ]
         ]
 
