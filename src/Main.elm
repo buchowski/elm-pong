@@ -48,6 +48,7 @@ type Msg
     | MovePlayerTwoDown
     | MoveBall Float
     | TogglePauseGame
+    | ToggleSinglePlayerBot
     | Other
 
 
@@ -130,14 +131,23 @@ getIsCollision model paddlePosX paddlePosY =
     (doesBallLeftOverlap || doesBallRightOverlap) && (doesBallTopOverlap || doesBallBottomOverlap)
 
 
+getIsOutOfBounds : Int -> Int -> Int -> ( Bool, Bool )
+getIsOutOfBounds posY lowerBound upperBound =
+    let
+        isTooHigh =
+            posY <= lowerBound
+
+        isTooLow =
+            posY >= upperBound
+    in
+    ( isTooHigh, isTooLow )
+
+
 getNextYDelta : Model -> Int
 getNextYDelta model =
     let
-        isTooHigh =
-            model.ballPosY <= 0
-
-        isTooLow =
-            model.ballPosY >= 400
+        ( isTooHigh, isTooLow ) =
+            getIsOutOfBounds model.ballPosY 0 400
     in
     if isTooHigh then
         ySpeed
@@ -187,6 +197,41 @@ getNextDeltas model =
     ( getNextXDelta model, getNextYDelta model )
 
 
+getRightPaddlePosY : Model -> Int
+getRightPaddlePosY model =
+    let
+        isBallIncoming =
+            model.ballDeltaX > 0
+
+        isAboveMiddle =
+            model.playerTwoPosY < startYPos
+
+        isBelowMiddle =
+            model.playerTwoPosY > startYPos
+
+        ( isTooHigh, isTooLow ) =
+            getIsOutOfBounds model.playerTwoPosY 10 345
+    in
+    if model.gameMode == SinglePlayerVsBot then
+        if isBallIncoming && (isTooHigh || isTooLow) then
+            model.playerTwoPosY
+
+        else if isBallIncoming then
+            model.playerTwoPosY + model.ballDeltaY
+
+        else if isAboveMiddle then
+            model.playerTwoPosY + 1
+
+        else if isBelowMiddle then
+            model.playerTwoPosY - 1
+
+        else
+            model.playerTwoPosY
+
+    else
+        model.playerTwoPosY
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -200,6 +245,13 @@ update msg model =
                 ( { model | isPaused = True, ballDeltaX = 0, ballDeltaY = 0, ballDeltaXCopy = model.ballDeltaX, ballDeltaYCopy = model.ballDeltaY }
                 , Cmd.none
                 )
+
+        ToggleSinglePlayerBot ->
+            if model.gameMode == SinglePlayerVsSelf then
+                ( { model | gameMode = SinglePlayerVsBot }, Cmd.none )
+
+            else
+                ( { model | gameMode = SinglePlayerVsSelf }, Cmd.none )
 
         MovePlayerOneUp ->
             ( { model | playerOnePosY = getPosInBounds model.playerOnePosY - moveDelta }
@@ -236,7 +288,7 @@ update msg model =
                     getIsOutOfBoundsX model
 
                 updatedModel =
-                    { model | ballPosX = newBallPosX, ballDeltaX = xDelta, ballPosY = newBallPosY, ballDeltaY = yDelta }
+                    { model | ballPosX = newBallPosX, ballDeltaX = xDelta, ballPosY = newBallPosY, ballDeltaY = yDelta, playerTwoPosY = getRightPaddlePosY model }
             in
             if isTooFarLeft then
                 ( { updatedModel | playerTwoScore = model.playerTwoScore + 1 }, Cmd.none )
@@ -277,6 +329,9 @@ toKeyboardInput key =
 
         "s" ->
             MovePlayerOneDown
+
+        "b" ->
+            ToggleSinglePlayerBot
 
         "ArrowUp" ->
             MovePlayerTwoUp
